@@ -14,65 +14,63 @@
 
 ;; [#{#{x1, x2, x3, x4}, ...}, #{y1, y2}] -> count
 
-(defn count-minterm [bool-fn minterm]
-  (reduce + (map #(if (clojure.set/subset? minterm %) 1 0) bool-fn)))
 
 
-(defn get-minterm-4 [bool-fn]
-  (set (map second
-            (filter #(= (first %) 4)
-                    (for [m [['a 'c] ['A 'c] ['a 'C] ['A 'C]
-                             ['a 'b] ['a 'B] ['A 'b] ['A 'B]
-                             ['c 'd] ['c 'D] ['C 'd] ['C 'D]
-                             ['b 'd] ['B 'd] ['b 'D] ['B 'D]
-                             ['b 'c] ['B 'c] ['b 'C] ['B 'C]]]
-                      [(count-minterm bool-fn m) m])))))
-
-
-(defn contains-minterm? [minterm-set bool-fn-set]
-  (reduce #(or %1
-               (clojure.set/subset? %2 bool-fn-set)) false minterm-set))
-
-
-(defn reduce-by-minterm-4 [bool-fn]
-  (filter #(not (contains-minterm? (get-minterm-4 bool-fn) %)) bool-fn))
-
-
-(defn get-minterm-2 [bool-fn]
-  (set (map second
-            (filter #(= (first %) 2)
-                    (for [m [['a 'c 'd] ['A 'c 'd]
-                             ['a 'c 'D] ['A 'c 'D]
-                             ['a 'C 'd] ['A 'C 'd]
-                             ['a 'C 'D] ['A 'C 'D]
-                             ['a 'b 'c] ['a 'B 'c]
-                             ['A 'b 'c] ['A 'B 'c]
-                             ['a 'b 'C] ['a 'B 'C]
-                             ['A 'b 'C] ['A 'B 'C]]]
-                      [(count-minterm bool-fn m) m])))))
-
-
-(defn reduce-by-minterm-2 [bool-fn]
-  (filter #(not (contains-minterm? (get-minterm-2 bool-fn) %)) bool-fn))
-
-
-(defn karnaugh [bool-fn]
-  (let [bool-fn-reduced-by-minterms (reduce-by-minterm-2 (reduce-by-minterm-4 bool-fn))
-        reduced-bool-fn (if (empty? bool-fn-reduced-by-minterms)
-                          (set
-                           (filter #(not (empty? %))
-                                   (clojure.set/union (map set (get-minterm-4 bool-fn))
-                                                      (map set (get-minterm-2
-                                                                (reduce-by-minterm-4 bool-fn))))))
-                          (set
-                           (filter #(not (empty? %))
-                                   (clojure.set/union (map set (get-minterm-4 bool-fn))
-                                                      (map set (get-minterm-2
-                                                                (reduce-by-minterm-4 bool-fn)))
-                                                      (conj #{}
-                                                            (apply
-                                                             clojure.set/intersection
-                                                             bool-fn-reduced-by-minterms))))))]
-    (if (empty? reduced-bool-fn)
-      bool-fn
-      reduced-bool-fn)))
+(fn karnaugh [bool-fn]
+  (letfn [(count-minterm
+            [bool-fn minterm]
+            (reduce + (map #(if (clojure.set/subset? minterm %) 1 0) bool-fn)))
+          (get-minterm-4
+            [bool-fn]
+            (set (map second
+                      (filter #(= (first %) 4)
+                              (for [m [['a 'c] ['A 'c] ['a 'C] ['A 'C]
+                                       ['a 'b] ['a 'B] ['A 'b] ['A 'B]
+                                       ['c 'd] ['c 'D] ['C 'd] ['C 'D]
+                                       ['b 'd] ['B 'd] ['b 'D] ['B 'D]
+                                       ['b 'c] ['B 'c] ['b 'C] ['B 'C]]]
+                                [(count-minterm bool-fn m) m])))))
+          (contains-minterm?
+            [minterm-set bool-fn-set]
+            (reduce #(or %1
+                         (clojure.set/subset? %2 bool-fn-set)) false minterm-set))
+          (reduce-by-minterm-4
+            [bool-fn]
+            (filter #(not (contains-minterm? (get-minterm-4 bool-fn) %)) bool-fn))
+          (get-minterm-2
+            [bool-fn]
+            (set (map second
+                      (filter #(= (first %) 2)
+                              (for [m [['a 'c 'd] ['A 'c 'd]
+                                       ['a 'c 'D] ['A 'c 'D]
+                                       ['a 'C 'd] ['A 'C 'd]
+                                       ['a 'C 'D] ['A 'C 'D]
+                                       ['a 'b 'c] ['a 'B 'c]
+                                       ['A 'b 'c] ['A 'B 'c]
+                                       ['a 'b 'C] ['a 'B 'C]
+                                       ['A 'b 'C] ['A 'B 'C]]]
+                                [(count-minterm bool-fn m) m])))))
+          (reduce-by-minterm-2
+            [bool-fn]
+            (filter #(not (contains-minterm? (get-minterm-2 bool-fn) %)) bool-fn))]
+    (let [bool-fn-reduced-by-minterms (reduce-by-minterm-2 (reduce-by-minterm-4 bool-fn))
+          reduced-bool-fn (if (empty? bool-fn-reduced-by-minterms)
+                            (set
+                             (filter #(not (empty? %))
+                                     (clojure.set/union
+                                      (map set (get-minterm-4 bool-fn))
+                                      (map set (get-minterm-2
+                                                (reduce-by-minterm-4 bool-fn))))))
+                            (set
+                             (filter #(not (empty? %))
+                                     (clojure.set/union
+                                      (map set (get-minterm-4 bool-fn))
+                                      (map set (get-minterm-2
+                                                (reduce-by-minterm-4 bool-fn)))
+                                      (conj #{}
+                                            (apply
+                                             clojure.set/intersection
+                                             bool-fn-reduced-by-minterms))))))]
+      (if (empty? reduced-bool-fn)
+        bool-fn
+        reduced-bool-fn))))
