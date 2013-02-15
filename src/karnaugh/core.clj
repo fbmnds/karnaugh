@@ -23,7 +23,9 @@
             (filter #(= (first %) 4)
                     (for [m [['a 'c] ['A 'c] ['a 'C] ['A 'C]
                              ['a 'b] ['a 'B] ['A 'b] ['A 'B]
-                             ['c 'd] ['c 'D] ['C 'd] ['C 'D]]]
+                             ['c 'd] ['c 'D] ['C 'd] ['C 'D]
+                             ['b 'd] ['B 'd] ['b 'D] ['B 'D]
+                             ['b 'c] ['B 'c] ['b 'C] ['B 'C]]]
                       [(count-minterm bool-fn m) m])))))
 
 

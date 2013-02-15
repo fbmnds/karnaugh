@@ -1,5 +1,6 @@
 (ns karnaugh.core-test
   (:use clojure.test
+        clojure.set
         karnaugh.core))
 
 
